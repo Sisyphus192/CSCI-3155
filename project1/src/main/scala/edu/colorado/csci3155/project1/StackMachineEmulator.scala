@@ -24,8 +24,46 @@ object StackMachineEmulator {
         Throw an exception or assertion violation when error happens.
 
      */
+
+    def do_una_op(stackL: List[Double], una: (Double) => Double): List[Double] = stackL match {
+      case x :: rest => una(x) :: rest
+      case Nil => throw new IllegalArgumentException("Stack is Empty")
+    }
+    def do_bin_op(stackL: List[Double], bop: (Double, Double) => Double): List[Double] = stackL match {
+      case x :: y :: rest => bop(y,x) :: rest
+      case Nil => throw new IllegalArgumentException("Stack is Empty")
+      case _ => throw new IllegalArgumentException("Insufficient number of elements in stack for operation")
+    }
+
     def emulateSingleInstruction(stack: List[Double], ins: StackMachineInstruction): List[Double] =
-        ???
+        ins match {
+          case PushI(d) => d :: stack
+          case PopI => stack.init
+          case AddI => do_bin_op(stack, (y,x) => y + x)
+          case SubI => do_bin_op(stack, (y,x) => y - x)
+          case MultI => do_bin_op(stack, (y,x) => y * x)
+          case DivI => do_bin_op(stack, (y,x) => {
+              if (x == 0){
+                throw new IllegalArgumentException("Division by 0")
+              }
+              else {
+                y / x
+              }
+            }
+          )
+          case LogI => do_una_op(stack, (x) => {
+              if (x > 0){
+                scala.math.log(x)
+              }
+              else {
+                throw new IllegalArgumentException("Cannot take log of num <= 0")
+              }
+            }
+          )
+          case ExpI => do_una_op(stack, (x) => scala.math.exp(x))
+          case SinI => do_una_op(stack, (x) => scala.math.sin(x))
+          case CosI => do_una_op(stack, (x) => scala.math.cos(x))
+        }
 
     /* Function emulateStackMachine
        Execute the list of instructions provided as inputs using the
@@ -35,6 +73,5 @@ object StackMachineEmulator {
        are executed.
      */
     def emulateStackMachine(instructionList: List[StackMachineInstruction]): Double =
-        ???
-
+        instructionList.foldLeft(Nil: List[Double])(emulateSingleInstruction)(0) 
 }
